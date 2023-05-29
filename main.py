@@ -24,7 +24,7 @@ def train():
     query = 'SELECT \"userId\", \"categoryId\", score::Integer FROM core.user_category;'
     df = pd.read_sql_query(query, con=db)
     pivoteDF = df.pivot_table(
-        index='userId', columns='categoryId', values="score", aggfunc='sum')
+        index='userId', columns='categoryId', values="score", aggfunc='sum', fill_value=0)
     pivoteDF
     dataset = pivoteDF.values
     print("dataset\n", dataset)
