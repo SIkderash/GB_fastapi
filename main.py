@@ -7,7 +7,12 @@ from sqlalchemy import create_engine
 
 
 app = FastAPI()
-recommendations = ()
+recommendations = dict()
+
+def write_2d_array_to_csv(data, filename):
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(data)
 
 @app.get("/train")
 def train():
@@ -20,10 +25,12 @@ def train():
         index='userId', columns='categoryId', values="score", aggfunc='sum')
     pivoteDF
     dataset = pivoteDF.values
+    print("dataset\n", dataset)
 
     # Calculate the user similarity matrix
     user_similarity = cosine_similarity(dataset)
-    for user in range(dataset.shape[0]-1):
+    write_2d_array_to_csv(user_similarity, "user_sim.csv")
+    for user in range(dataset.shape[0]):
         recommendation = getRecommendation(user, user_similarity, dataset)
         recommendations[user] = recommendation
     return {"message" : "User Similarity Calculated, User recommendations calculated"}
@@ -41,7 +48,7 @@ def getRecommendation(target_user, user_similarity, dataset):
 
     # Recommend categories based on similar users' preferences
     recommendation = []
-    for category in range(dataset.shape[1]-1):
+    for category in range(dataset.shape[1]):
         if dataset[target_user, category] == 0:  # User has not rated this category
             category_rating = 0
             similarity_sum = 0
@@ -52,7 +59,7 @@ def getRecommendation(target_user, user_similarity, dataset):
                     similarity_sum += user_similarity[target_user, user]
             if similarity_sum > 0:
                 category_rating /= similarity_sum
-            recommendation.append((category, category_rating))
+            recommendation.append((category+1, category_rating))
     
     # Sort the recommendations by rating (descending order)
     recommendation = sorted(
